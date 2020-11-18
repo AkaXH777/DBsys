@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cy.pj.sys.dao.SysRoleDao">
+
+	<select id="findMenuIdsByRoleIds" resultType="int">
+		select menu_id
+		from sys_role_menus
+		where role_id in
+		<foreach collection="roleIds" open="(" separator="," close=")"
+			item="roleId">
+
+			#{roleId}
+		</foreach>
+
+	</select>
+
+
+
+	<sql id="queryWhereId">
+		<where>
+			<if test="name!=null and name!=''">
+				name like concat("%",#{name},"%")
+			</if>
+		</where>
+	</sql>
+
+	<!-- resultType -->
+	<select id="getRowCount" resultType="int">
+		select count(*)
+		from sys_roles
+		<include refid="queryWhereId" />
+	</select>
+	<select id="findPageObjects"
+		resultType="com.cy.pj.sys.pojo.SysRole">
+		select * from sys_roles
+		<include refid="queryWhereId" />
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+
+	<insert id="insertObject"
+		parameterType="com.cy.pj.sys.pojo.SysRole" useGeneratedKeys="true"
+		keyProperty="id">
+		insert into sys_roles
+		(id,name,note,createdTime,modifiedTime,
+		createdUser,modifiedUser)
+		values(null,#{name},#{note},now(),now(),#{createdUser},#{modifiedUser})
+	</insert>
+
+	<!-- resultMap原生用于实现mybatis框架中的高级映射 1)自定义字段属性映射(表中的字段名与类中的属性不一致) 2)表嵌套查询映射 
+		3)表关联查询映射(join) -->
+	<resultMap type="com.cy.pj.sys.pojo.SysRoleMenu"
+		id="sysRoleMenu">
+		<!-- 假如基于id做再次执行查询，又希望将id值存储到值对象， 可以对id进行专门映射 -->
+		<id property="id" column="id" /><!-- 主键映射用id -->
+		<!-- collection一般应用于one2many查询 -->
+		<collection property="menuIds"
+			select="com.cy.pj.sys.dao.SysRoleMenuDao.findMenuIdsByRoleId"
+			column="id">
+		</collection>
+	</resultMap>
+	<!-- 从角色表查询角色自身信息 -->
+	<select id="findObjectById" resultMap="sysRoleMenu">
+		select id,name,note
+		from
+		sys_roles
+		where id=#{id}
+	</select>
+
+	<update id="updateObject">
+		update sys_roles
+		set
+		name=#{name},
+		note=#{note},
+		modifiedUser=#{modifiedUser},
+		modifiedTime=now()
+		where id=#{id}
+	</update>
+
+
+</mapper>  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
